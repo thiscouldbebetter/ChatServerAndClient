@@ -1,0 +1,67 @@
+<html>
+<body>
+
+<!-- imports -->
+
+<script type="text/javascript" src="node_modules/socket.io-client/dist/socket.io.js"></script>
+
+<script type="text/javascript" src="Common/Channel.js"></script>
+<script type="text/javascript" src="Common/Message.js"></script>
+<script type="text/javascript" src="Common/Session.js"></script>
+<script type="text/javascript" src="Common/Socket.js"></script>
+
+<script type="text/javascript" src="Client.js"></script>
+
+<!-- imports ends -->
+
+<div id="divUI">
+
+	<h3>Chat Client</h3>
+
+	<p>
+		First, install all dependencies by running "npm install socket.io" and "npm install socket.io-client" at the command line.
+		Next, start the server by running "node Server.js".
+		Then enter a "/connect" command, like "/connect http://localhost:8089 User1" and press the Enter key or click the Send button to join the server.
+		Once connected, type messages in the bottom bar and press Enter to send them.
+	</p>
+
+	<label>Messages:</label>
+	<br />
+	<textarea id="textareaOutput" cols="80" rows="16" disabled="true"></textarea>
+	<br />
+
+	<label>Message to Post or Command to Run:</label>
+	<br />
+	<textarea id="textareaInput" cols="80" rows="1">/connect http://localhost:8089 User1</textarea>
+	<button onclick="buttonSend_Clicked();">Send</button>
+	<br />
+
+</div>
+
+<script type="text/javascript">
+
+// ui event handlers
+
+document.body.onkeypress = body_KeyPressed;
+
+function body_KeyPressed(event)
+{
+	var key = event.key;
+
+	if (key == "Enter")
+	{
+		event.preventDefault();
+		buttonSend_Clicked();
+	}
+}
+
+function buttonSend_Clicked()
+{
+	var client = Client.Instance();
+	client.processMessageBodyOrCommandText();
+}
+
+</script>
+
+</body>
+</html>
