@@ -1,9 +1,14 @@
+// The SourceFileCompiler class and the code that uses it
+// is how the class files being included in this Node.js program,
+// while not adding anything to them that makes them stop working
+// when included via the <script /> tag in an .html page.
+// There's got to be a better way.
+
 class SourceFileCompiler
 {
-	readClassesByNameFromSourceFiles()
+	readClassesByNameFromSourceFiles(sourceDirectoryPath)
 	{
 		var fs = require("fs");
-		var sourceDirectoryPath = "./Common/";
 		var commonFiles = fs.readdirSync(sourceDirectoryPath);
 		var classesByName = new Map();
 		for (var i = 0; i < commonFiles.length; i++)
@@ -22,7 +27,9 @@ class SourceFileCompiler
 }
 
 var compiler = new SourceFileCompiler();
-var classesByName = compiler.readClassesByNameFromSourceFiles();
+var sourceDirectoryPath = "./Classes/";
+var classesByName =
+	compiler.readClassesByNameFromSourceFiles(sourceDirectoryPath);
 var Channel = classesByName["Channel"];
 var Connection = classesByName["Connection"];
 var Message = classesByName["Message"];

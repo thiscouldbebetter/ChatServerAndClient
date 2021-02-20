@@ -1,11 +1,19 @@
 
 class Client
 {
+	constructor(inputOutputStream)
+	{
+		this.inputOutputStream = inputOutputStream;
+	}
+
 	static Instance()
 	{
 		if (Client._instance == null)
 		{
-			Client._instance = new Client();
+			Client._instance = new Client
+			(
+				new InputOutputStreamUI()
+			);
 		}
 		return Client._instance;
 	}
@@ -15,6 +23,7 @@ class Client
 	connect(serviceURLToConnectTo, clientName)
 	{
 		var client = this;
+		var ioStream = this.inputOutputStream;
 
 		this.serviceURL = serviceURLToConnectTo;
 		this.clientName = clientName;
@@ -45,7 +54,7 @@ class Client
 			"connect_error", 
 			() =>
 			{
-				client.writeLine("Could not connect to server.  Will not retry.");
+				ioStream.writeLine("Could not connect to server.  Will not retry.");
 				client.disconnect();
 			}
 		);
@@ -56,7 +65,7 @@ class Client
 			() =>
 			{
 				client.disconnect();
-				client.writeLine("Client disconnected by server.");
+				ioStream.writeLine("Client disconnected by server.");
 			}
 		);
 
@@ -92,7 +101,10 @@ class Client
 
 	handleEvent_UserIdentificationError(errorText)
 	{
-		this.writeLine("Error identifying user: " + errorText);
+		this.inputOutputStream.writeLine
+		(
+			"Error identifying user: " + errorText
+		);
 	}
 
 	handleEvent_SessionEstablished()
@@ -111,7 +123,7 @@ class Client
 		var messageReceived =
 			Message.deserialize(messageReceivedSerialized);
 		var messageAsString = messageReceived.toString();
-		this.writeLine(messageAsString);
+		this.inputOutputStream.writeLine(messageAsString);
 		this.session.timeLastUpdated = messageReceived.timePosted;
 	}
 
@@ -134,9 +146,9 @@ class Client
 
 	processMessageBodyOrCommandText()
 	{
-		var client = this;
+		var ioStream = this.inputOutputStream;
 
-		var messageBodyOrCommandText = client.readLine();
+		var messageBodyOrCommandText = ioStream.readLine();
 
 		if (messageBodyOrCommandText.length == 0)
 		{
@@ -155,21 +167,21 @@ class Client
 
 				if (serviceUrl == null)
 				{
-					client.writeLine("No server URL specified!");
+					ioStream.writeLine("No server URL specified!");
 				}
 				else if (userName == null)
 				{
-					client.writeLine("No username specified!");
+					ioStream.writeLine("No username specified!");
 				}
 				else
 				{
-					client.connect(serviceUrl, userName);
+					this.connect(serviceUrl, userName);
 				}
 			}
 			else if (commandOperation == "/disconnect")
 			{
-				client.disconnect();
-				client.writeLine("Client disconnected from server.");
+				this.disconnect();
+				ioStream.writeLine("Client disconnected from server.");
 			}
 			else if (commandOperation == "/to")
 			{
@@ -191,8 +203,8 @@ class Client
 
 				if (usersToSendToNames.length == 0)
 				{
-					client.writeLine("No user names specified!");
-					client.writeLine("Usage: /to @user1 @user2 This is a private message.");
+					ioStream.writeLine("No user names specified!");
+					ioStream.writeLine("Usage: /to @user1 @user2 This is a private message.");
 				}
 				else
 				{
@@ -201,17 +213,17 @@ class Client
 					var socket = client.socketToServer;
 					if (socket == null || socket.isConnected() == false)
 					{
-						client.writeLine("Not connected.  Use the /connect command to connect.")
+						ioStream.writeLine("Not connected.  Use the /connect command to connect.")
 					}
 					else
 					{
-						client.messageSendToUsersWithNames(messageBody, usersToSendToNames);
+						this.messageSendToUsersWithNames(messageBody, usersToSendToNames);
 					}
 				}
 			}
 			else
 			{
-				client.writeLine("Unrecognized command: " + commandOperation);
+				ioStream.writeLine("Unrecognized command: " + commandOperation);
 				var helpTextAsLines =
 				[
 					"Commands",
@@ -220,38 +232,21 @@ class Client
 					"/disconnect",
 					"/to @<username> [ @<username2> ... ] <private message text>",
 				];
-				helpTextAsLines.forEach(x => client.writeLine(x));
+				helpTextAsLines.forEach(x => ioStream.writeLine(x));
 			}
 		}
 		else
 		{
 			var messageBody = messageBodyOrCommandText;
-			var socket = client.socketToServer;
+			var socket = this.socketToServer;
 			if (socket == null || socket.isConnected() == false)
 			{
-				client.writeLine("Not connected.  Use the /connect command to connect.")
+				ioStream.writeLine("Not connected.  Use the /connect command to connect.")
 			}
 			else
 			{
-				client.messageSend(messageBody);
+				this.messageSend(messageBody);
 			}
 		}
-	}
-
-	readLine()
-	{
-		var d = document;
-		var textareaInput = d.getElementById("textareaInput");
-		var lineRead = textareaInput.value;
-		textareaInput.value = "";
-		return lineRead;
-	}
-
-	writeLine(lineToWrite)
-	{
-		var d = document;
-		var textareaOutput = d.getElementById("textareaOutput");
-		var newline = "\n";
-		textareaOutput.value += newline + lineToWrite;
 	}
 }
