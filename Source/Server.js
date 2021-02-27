@@ -6,21 +6,38 @@
 
 class SourceFileCompiler
 {
-	readClassesByNameFromSourceFiles(sourceDirectoryPath)
+	readClassesByNameFromSourceFiles(sourceDirectoryPath, classesByName)
 	{
 		var fs = require("fs");
 		var commonFiles = fs.readdirSync(sourceDirectoryPath);
-		var classesByName = new Map();
+		if (classesByName == null)
+		{
+			var classesByName = new Map();
+		}
 		for (var i = 0; i < commonFiles.length; i++)
 		{
 			var fileName = commonFiles[i];
 			var className = fileName.split(".")[0];
 			var filePath = sourceDirectoryPath + fileName;
-			var fileAsString =
-				fs.readFileSync(filePath).toString();
-			var fileAsStringWrapped = "(" + fileAsString + ")";
-			var fileAsClass = eval(fileAsStringWrapped);
-			classesByName[className] = fileAsClass;
+			var isDirectory = fs.lstatSync(filePath).isDirectory() 
+
+			if (isDirectory)
+			{
+				filePath += "/";
+				this.readClassesByNameFromSourceFiles(filePath, classesByName);
+			}
+			else if (filePath.endsWith(".js"))
+			{
+				var fileAsString =
+					fs.readFileSync(filePath).toString();
+				var fileAsStringWrapped = "(" + fileAsString + ")";
+				var fileAsClass = eval(fileAsStringWrapped);
+				classesByName.set(className, fileAsClass);
+			}
+			else
+			{
+				// Not a .js file.  Do nothing.
+			}
 		}
 		return classesByName;
 	}
@@ -30,11 +47,11 @@ var compiler = new SourceFileCompiler();
 var sourceDirectoryPath = "./Classes/";
 var classesByName =
 	compiler.readClassesByNameFromSourceFiles(sourceDirectoryPath);
-var Channel = classesByName["Channel"];
-var Connection = classesByName["Connection"];
-var Message = classesByName["Message"];
-var Socket = classesByName["Socket"];
-var User = classesByName["User"];
+var Channel = classesByName.get("Channel");
+var Connection = classesByName.get("Connection");
+var Message = classesByName.get("Message");
+var Socket = classesByName.get("Socket");
+var User = classesByName.get("User");
 
 class Server
 {

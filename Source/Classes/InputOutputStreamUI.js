@@ -1,6 +1,13 @@
 
 class InputOutputStreamUI
 {
+	clear()
+	{
+		var d = document;
+		var textareaOutput = d.getElementById("textareaOutput");
+		textareaOutput.value = "";
+	}
+
 	readLine()
 	{
 		var d = document;
@@ -16,5 +23,6 @@ class InputOutputStreamUI
 		var textareaOutput = d.getElementById("textareaOutput");
 		var newline = "\n";
 		textareaOutput.value += newline + lineToWrite;
+		textareaOutput.scrollTop = 999999999; // Because infinity doesn't work!
 	}
 }

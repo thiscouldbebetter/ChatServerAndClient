@@ -1,0 +1,90 @@
+<html>
+<body>
+
+<!-- imports -->
+
+<script type="text/javascript" src="node_modules/socket.io-client/dist/socket.io.js"></script>
+
+<script type="text/javascript" src="Classes/Channel.js"></script>
+<script type="text/javascript" src="Classes/Client.js"></script>
+<script type="text/javascript" src="Classes/InputOutputStreamNull.js"></script>
+<script type="text/javascript" src="Classes/Message.js"></script>
+<script type="text/javascript" src="Classes/Session.js"></script>
+<script type="text/javascript" src="Classes/Socket.js"></script>
+
+<script type="text/javascript" src="Classes/Agents/AgentDiceRoll.js"></script>
+<script type="text/javascript" src="Classes/Agents/AgentEcho.js"></script>
+<script type="text/javascript" src="Classes/Agents/AgentRockPaperScissors.js"></script>
+<script type="text/javascript" src="Classes/Agents/AgentRockPaperScissors_Game.js"></script>
+
+<!-- imports ends -->
+
+<div id="divUI">
+
+	<h3>Chat Agent</h3>
+
+	<p>
+	Connects an AI agent of the specified type (dice roller, echo, etc.) to a chat server.
+	</p>
+
+	<div>
+		<label>Service URL:</label>
+		<input id="inputServiceUrl" value="http://localhost:8089" />
+	</div>
+
+	<div>
+		<label>Agent Name:</label>
+		<input id="inputAgentName" value="Agent1" />
+	</div>
+
+	<div>
+		<label>Agent Type:</label>
+		<select id="selectAgentType">
+			<option>Dice Roller</option>
+			<option>Echo</option>
+			<option>Rock, Paper, Scissors</option>
+		</select>
+	</div>
+
+	<button onclick="buttonConnect_Clicked();">Connect</button>
+
+</div>
+
+<script type="text/javascript">
+
+function buttonConnect_Clicked()
+{
+	var d = document;
+
+	var inputServiceUrl = d.getElementById("inputServiceUrl");
+	var serviceUrl = inputServiceUrl.value;
+
+	var inputAgentName = d.getElementById("inputAgentName");
+	var agentName = inputAgentName.value;
+
+	var selectAgentType = d.getElementById("selectAgentType");
+	var agentType = selectAgentType.value;
+
+	if (agentType == "Dice Roller")
+	{
+		var agent = new AgentDiceRoll(agentName, serviceUrl);
+	}
+	else if (agentType == "Echo")
+	{
+		var agent = new AgentEcho(agentName, serviceUrl);
+	}
+	else if (agentType == "Rock, Paper, Scissors")
+	{
+		var agent = new AgentRockPaperScissors(agentName, serviceUrl);
+	}
+	else
+	{
+		alert("Unknown agent type!");
+	}
+
+}
+
+</script>
+
+</body>
+</html>

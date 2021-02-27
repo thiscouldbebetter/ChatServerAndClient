@@ -26,16 +26,36 @@ class Message
 	{
 		var messageParts = messageSerialized.split("|");
 		var timePostedAsString = messageParts[0];
+		var userSenderName = messageParts[1];
+		var usersAddressedNamesJoined = messageParts[2];
+		var usersAddressedNames =
+		(
+			usersAddressedNamesJoined == ""
+			? null
+			: usersAddressedNamesJoined.split(";")
+		)
+		var body = messageParts[3];
 		var timePosted = new Date(Date.parse(timePostedAsString));
 		var returnValue = new Message
 		(
-			timePosted, messageParts[1], null, messageParts[2]
+			timePosted, userSenderName, usersAddressedNames, body
 		);
 		return returnValue;
 	}
 
 	serialize()
 	{
-		return [ this.timePosted, this.userSenderName, this.body ].join("|");
+		var usersAddressedNamesJoined =
+		(
+			this.usersAddressedNames == null ? "" : this.usersAddressedNames.join(";")
+		);
+
+		var fields =
+		[
+			this.timePosted, this.userSenderName,
+			usersAddressedNamesJoined, this.body
+		];
+
+		return fields.join("|");
 	}
 }

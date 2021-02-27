@@ -1,18 +1,25 @@
 
 class Client
 {
-	constructor(inputOutputStream)
+	constructor(inputStream, outputStream, messageReceive)
 	{
-		this.inputOutputStream = inputOutputStream;
+		this.inputStream = inputStream;
+		this.outputStream = outputStream;
+		this._messageReceive = messageReceive;
+
+		this.sessionEstablishCallback = null;
 	}
 
 	static Instance()
 	{
 		if (Client._instance == null)
 		{
+			var inputOutputStream =
+				new InputOutputStreamUI();
 			Client._instance = new Client
 			(
-				new InputOutputStreamUI()
+				inputOutputStream, // inputStream
+				inputOutputStream // outputStream
 			);
 		}
 		return Client._instance;
@@ -20,10 +27,12 @@ class Client
 
 	// methods
 
-	connect(serviceURLToConnectTo, clientName)
+	connect(serviceURLToConnectTo, clientName, sessionEstablishCallback)
 	{
+		this.sessionEstablishCallback = sessionEstablishCallback;
+
 		var client = this;
-		var ioStream = this.inputOutputStream;
+		var outputStream = this.outputStream;
 
 		this.serviceURL = serviceURLToConnectTo;
 		this.clientName = clientName;
@@ -54,7 +63,7 @@ class Client
 			"connect_error", 
 			() =>
 			{
-				ioStream.writeLine("Could not connect to server.  Will not retry.");
+				outputStream.writeLine("Could not connect to server.  Will not retry.");
 				client.disconnect();
 			}
 		);
@@ -65,7 +74,7 @@ class Client
 			() =>
 			{
 				client.disconnect();
-				ioStream.writeLine("Client disconnected by server.");
+				outputStream.writeLine("Client disconnected by server.");
 			}
 		);
 
@@ -74,7 +83,6 @@ class Client
 			"identificationError", 
 			this.handleEvent_UserIdentificationError.bind(this)
 		);
-
 	}
 
 	disconnect()
@@ -95,39 +103,56 @@ class Client
 		this.socketToServer.on
 		(
 			"sessionEstablished", 
-			this.handleEvent_SessionEstablished.bind(this)
+			this.sessionEstablish.bind(this)
 		);
 	}
 
 	handleEvent_UserIdentificationError(errorText)
 	{
-		this.inputOutputStream.writeLine
+		this.outputStream.writeLine
 		(
 			"Error identifying user: " + errorText
 		);
 	}
 
-	handleEvent_SessionEstablished()
+	sessionEstablish()
 	{
 		this.session = new Session();
 
 		this.socketToServer.on
 		(
 			"messageReceived", 
-			this.handleEvent_MessageReceived.bind(this)
+			this.messageReceiveSerialized.bind(this)
 		);
+
+		if (this.sessionEstablishCallback != null)
+		{
+			this.sessionEstablishCallback.call(this);
+		}
 	}
 
-	handleEvent_MessageReceived(messageReceivedSerialized)
+	messageReceive(messageReceived)
 	{
-		var messageReceived =
-			Message.deserialize(messageReceivedSerialized);
-		var messageAsString = messageReceived.toString();
-		this.inputOutputStream.writeLine(messageAsString);
+		if (this._messageReceive == null)
+		{
+			var messageAsString = messageReceived.toString();
+			this.outputStream.writeLine(messageAsString);
+		}
+		else
+		{
+			this._messageReceive(messageReceived);
+		}
 		this.session.timeLastUpdated = messageReceived.timePosted;
 	}
 
-	messageSend(messageBody)
+	messageReceiveSerialized(messageReceivedSerialized)
+	{
+		var messageReceived =
+			Message.deserialize(messageReceivedSerialized);
+		this.messageReceive(messageReceived);
+	}
+
+	messageBodySend(messageBody)
 	{
 		this.socketToServer.emit
 		(
@@ -135,7 +160,7 @@ class Client
 		);
 	}
 
-	messageSendToUsersWithNames(messageBody, usersAddressedNames)
+	messageBodySendToUsersWithNames(messageBody, usersAddressedNames)
 	{
 		messageBody = "[to " +  usersAddressedNames.join(", ") + "] " + messageBody;
 		this.socketToServer.emit
@@ -146,9 +171,8 @@ class Client
 
 	processMessageBodyOrCommandText()
 	{
-		var ioStream = this.inputOutputStream;
-
-		var messageBodyOrCommandText = ioStream.readLine();
+		var messageBodyOrCommandText =
+			this.inputStream.readLine();
 
 		if (messageBodyOrCommandText.length == 0)
 		{
@@ -156,84 +180,7 @@ class Client
 		}
 		else if (messageBodyOrCommandText.startsWith("/"))
 		{
-			var commandText = messageBodyOrCommandText;
-			var commandParts = commandText.split(" ");
-			var commandOperation = commandParts[0];
-
-			if (commandOperation == "/connect")
-			{
-				var serviceUrl = commandParts[1];
-				var userName = commandParts[2];
-
-				if (serviceUrl == null)
-				{
-					ioStream.writeLine("No server URL specified!");
-				}
-				else if (userName == null)
-				{
-					ioStream.writeLine("No username specified!");
-				}
-				else
-				{
-					this.connect(serviceUrl, userName);
-				}
-			}
-			else if (commandOperation == "/disconnect")
-			{
-				this.disconnect();
-				ioStream.writeLine("Client disconnected from server.");
-			}
-			else if (commandOperation == "/to")
-			{
-				var usersToSendToNames = [];
-				var i;
-				for (i = 1; i < commandParts.length; i++)
-				{
-					var commandPart = commandParts[i];
-					if (commandPart.startsWith("@"))
-					{
-						var userName = commandPart.substr(1);
-						usersToSendToNames.push(userName);
-					}
-					else
-					{
-						break;
-					}
-				}
-
-				if (usersToSendToNames.length == 0)
-				{
-					ioStream.writeLine("No user names specified!");
-					ioStream.writeLine("Usage: /to @user1 @user2 This is a private message.");
-				}
-				else
-				{
-					var messageBody = commandParts.slice(i).join(" ");
-
-					var socket = client.socketToServer;
-					if (socket == null || socket.isConnected() == false)
-					{
-						ioStream.writeLine("Not connected.  Use the /connect command to connect.")
-					}
-					else
-					{
-						this.messageSendToUsersWithNames(messageBody, usersToSendToNames);
-					}
-				}
-			}
-			else
-			{
-				ioStream.writeLine("Unrecognized command: " + commandOperation);
-				var helpTextAsLines =
-				[
-					"Commands",
-					"========",
-					"/connect <serviceURL> <username>",
-					"/disconnect",
-					"/to @<username> [ @<username2> ... ] <private message text>",
-				];
-				helpTextAsLines.forEach(x => ioStream.writeLine(x));
-			}
+			this.processMessageBodyOrCommandText_Command(messageBodyOrCommandText);
 		}
 		else
 		{
@@ -241,11 +188,105 @@ class Client
 			var socket = this.socketToServer;
 			if (socket == null || socket.isConnected() == false)
 			{
-				ioStream.writeLine("Not connected.  Use the /connect command to connect.")
+				this.outputStream.writeLine("Not connected.  Use the /connect command to connect.")
 			}
 			else
 			{
-				this.messageSend(messageBody);
+				this.messageBodySend(messageBody);
+			}
+		}
+	}
+
+	processMessageBodyOrCommandText_Command(commandText)
+	{
+		var commandParts = commandText.split(" ");
+		var commandOperation = commandParts[0];
+
+		if (commandOperation == "/clear")
+		{
+			this.outputStream.clear();
+		}
+		else if (commandOperation == "/connect")
+		{
+			var serviceUrl = commandParts[1];
+			var userName = commandParts[2];
+
+			if (serviceUrl == null)
+			{
+				this.outputStream.writeLine("No server URL specified!");
+			}
+			else if (userName == null)
+			{
+				this.outputStream.writeLine("No username specified!");
+			}
+			else
+			{
+				this.connect(serviceUrl, userName);
+			}
+		}
+		else if (commandOperation == "/disconnect")
+		{
+			this.disconnect();
+			this.outputStream.writeLine("Client disconnected from server.");
+		}
+		else if (commandOperation == "/to")
+		{
+			this.processMessageBodyOrCommandText_Command_To(commandParts);
+		}
+		else
+		{
+			this.outputStream.writeLine("Unrecognized command: " + commandOperation);
+			var helpTextAsLines =
+			[
+				"Commands",
+				"========",
+				"/clear",
+				"/connect <serviceURL> <username>",
+				"/disconnect",
+				"/to @<username> [ @<username2> ... ] <private message text>",
+			];
+			helpTextAsLines.forEach(x => ioStream.writeLine(x));
+		}
+	}
+
+	processMessageBodyOrCommandText_Command_To(commandParts)
+	{
+		var usersToSendToNames = [];
+		var i;
+		for (i = 1; i < commandParts.length; i++)
+		{
+			var commandPart = commandParts[i];
+			if (commandPart.startsWith("@"))
+			{
+				var userName = commandPart.substr(1);
+				usersToSendToNames.push(userName);
+			}
+			else
+			{
+				break;
+			}
+		}
+
+		if (usersToSendToNames.length == 0)
+		{
+			this.outputStream.writeLine("No user names specified!");
+			this.outputStream.writeLine("Usage: /to @user1 @user2 This is a private message.");
+		}
+		else
+		{
+			var messageBody = commandParts.slice(i).join(" ");
+
+			var socket = this.socketToServer;
+			if (socket == null || socket.isConnected() == false)
+			{
+				this.outputStream.writeLine
+				(
+					"Not connected.  Use the /connect command to connect."
+				)
+			}
+			else
+			{
+				this.messageBodySendToUsersWithNames(messageBody, usersToSendToNames);
 			}
 		}
 	}
