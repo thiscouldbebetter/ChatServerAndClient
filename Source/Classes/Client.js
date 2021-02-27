@@ -169,30 +169,37 @@ class Client
 		);
 	}
 
-	processMessageBodyOrCommandText()
+	processMessageBodyOrCommandTextFromInput()
 	{
-		var messageBodyOrCommandText =
-			this.inputStream.readLine();
+		var messageBodyOrCommandText = this.inputStream.readLine();
+		this.processMessageBodyOrCommandText(messageBodyOrCommandText);
+	}
 
+	processMessageBodyOrCommandText(messageBodyOrCommandText)
+	{
 		if (messageBodyOrCommandText.length == 0)
 		{
 			// Do nothing.
 		}
-		else if (messageBodyOrCommandText.startsWith("/"))
+		else 
 		{
-			this.processMessageBodyOrCommandText_Command(messageBodyOrCommandText);
-		}
-		else
-		{
-			var messageBody = messageBodyOrCommandText;
-			var socket = this.socketToServer;
-			if (socket == null || socket.isConnected() == false)
+			if (messageBodyOrCommandText.startsWith("/"))
 			{
-				this.outputStream.writeLine("Not connected.  Use the /connect command to connect.")
+				this.processMessageBodyOrCommandText_Command(messageBodyOrCommandText);
 			}
 			else
 			{
-				this.messageBodySend(messageBody);
+				var messageBody = messageBodyOrCommandText;
+				var socket = this.socketToServer;
+				if (socket == null || socket.isConnected() == false)
+				{
+					this.outputStream.writeLine("Not connected.  Use the /connect command to connect.")
+				}
+				else
+				{
+					this.messageBodySend(messageBody);
+					this.messageBodyOrCommandTextPrevious = messageBody;
+				}
 			}
 		}
 	}
@@ -229,6 +236,15 @@ class Client
 			this.disconnect();
 			this.outputStream.writeLine("Client disconnected from server.");
 		}
+		else if (commandOperation == "/help")
+		{
+			this.processMessageBodyOrCommandText_Command_Help(commandParts);
+		}
+		else if (commandOperation == "/r" || commandOperation == "/repeat")
+		{
+			commandText = this.messageBodyOrCommandTextPrevious;
+			this.processMessageBodyOrCommandText(commandText);
+		}
 		else if (commandOperation == "/to")
 		{
 			this.processMessageBodyOrCommandText_Command_To(commandParts);
@@ -236,17 +252,26 @@ class Client
 		else
 		{
 			this.outputStream.writeLine("Unrecognized command: " + commandOperation);
-			var helpTextAsLines =
-			[
-				"Commands",
-				"========",
-				"/clear",
-				"/connect <serviceURL> <username>",
-				"/disconnect",
-				"/to @<username> [ @<username2> ... ] <private message text>",
-			];
-			helpTextAsLines.forEach(x => ioStream.writeLine(x));
+			this.processMessageBodyOrCommandText_Command_Help(commandParts);
 		}
+
+		this.messageBodyOrCommandTextPrevious = commandText;
+	}
+
+	processMessageBodyOrCommandText_Command_Help(commandParts)
+	{
+		var helpTextAsLines =
+		[
+			"Commands",
+			"========",
+			"/clear - Clears the view.",
+			"/connect <serviceURL> <username> - Connects to a server with the specified username.",
+			"/disconnect - Disconnects from the server.",
+			"/help - Shows this message.",
+			"/repeat, /r - Sends the last line again.",
+			"/to @<username> [ @<username2> ... ] <private message text> - Sends private message.",
+		];
+		helpTextAsLines.forEach(x => this.outputStream.writeLine(x));
 	}
 
 	processMessageBodyOrCommandText_Command_To(commandParts)

@@ -1,18 +1,31 @@
 
 class AgentDiceRoll
 {
-	constructor(name, serviceUrlToConnectTo)
+	constructor(name, serviceUrlToConnectTo, outputStream)
 	{
 		this.name = name;
 
-		var ioStream = new InputOutputStreamNull();
+		var inputStream = new InputOutputStreamNull();
+		this.outputStream = outputStream || new InputOutputStreamUI();
 
 		this.client = new Client
 		(
-			ioStream, ioStream, this.messageReceive.bind(this)
+			inputStream, this.outputStream, this.messageReceive.bind(this)
 		);
 
-		this.client.connect(serviceUrlToConnectTo, this.name);
+		var agent = this;
+		this.client.connect
+		(
+			serviceUrlToConnectTo,
+			this.name,
+			() =>
+			{
+				agent.client.messageBodySend
+				(
+					"Send 'roll 3d6', for example, to roll three six-sided dice."
+				);
+			}
+		);
 	}
 
 	messageReceive(messageReceived)
@@ -42,11 +55,14 @@ class AgentDiceRoll
 				}
 
 				var diceRollResultMessage =
-					messageReceived.userSenderName + " rolls: "
+					messageReceived.userSenderName + " rolls "
+					+ dieRollToMake + ": "
 					+ numbersRolledOnDice.join(" + ")
-					+ " = " + sumOfDiceSoFar;
+					+ (numberOfDice > 1 ? " = " + sumOfDiceSoFar : "");
 
 				this.client.messageBodySend(diceRollResultMessage);
+
+				this.outputStream.writeLine(diceRollResultMessage);
 			}
 		}
 	}

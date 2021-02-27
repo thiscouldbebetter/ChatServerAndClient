@@ -1,18 +1,31 @@
 
 class AgentEcho
 {
-	constructor(name, serviceUrlToConnectTo)
+	constructor(name, serviceUrlToConnectTo, outputStream)
 	{
 		this.name = name;
 
-		var ioStream = new InputOutputStreamNull();
+		var inputStream = new InputOutputStreamNull();
+		this.outputStream = outputStream || inputStream;
 
 		this.client = new Client
 		(
-			ioStream, ioStream, this.messageReceive.bind(this)
+			inputStream, this.outputStream, this.messageReceive.bind(this)
 		);
 
-		this.client.connect(serviceUrlToConnectTo, this.name);
+		var agent = this;
+		this.client.connect
+		(
+			serviceUrlToConnectTo,
+			this.name,
+			() =>
+			{
+				agent.client.messageBodySend
+				(
+					"I'm an echo agent.  I repeat what you say.  It's annoying."
+				);
+			}
+		);
 	}
 
 	messageReceive(messageReceived)

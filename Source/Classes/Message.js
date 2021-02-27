@@ -22,9 +22,15 @@ class Message
 
 	// Serialization.
 
+	static delimiter()
+	{
+		return "```";
+	}
+
 	static deserialize(messageSerialized)
 	{
-		var messageParts = messageSerialized.split("|");
+		var delimiter = Message.delimiter();
+		var messageParts = messageSerialized.split(delimiter);
 		var timePostedAsString = messageParts[0];
 		var userSenderName = messageParts[1];
 		var usersAddressedNamesJoined = messageParts[2];
@@ -52,10 +58,13 @@ class Message
 
 		var fields =
 		[
-			this.timePosted, this.userSenderName,
-			usersAddressedNamesJoined, this.body
+			this.timePosted,
+			this.userSenderName,
+			usersAddressedNamesJoined,
+			this.body
 		];
 
-		return fields.join("|");
+		var delimiter = Message.delimiter();
+		return fields.join(delimiter);
 	}
 }

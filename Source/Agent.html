@@ -7,15 +7,22 @@
 
 <script type="text/javascript" src="Classes/Channel.js"></script>
 <script type="text/javascript" src="Classes/Client.js"></script>
+<script type="text/javascript" src="Classes/Coords.js"></script>
 <script type="text/javascript" src="Classes/InputOutputStreamNull.js"></script>
+<script type="text/javascript" src="Classes/InputOutputStreamUI.js"></script>
 <script type="text/javascript" src="Classes/Message.js"></script>
 <script type="text/javascript" src="Classes/Session.js"></script>
 <script type="text/javascript" src="Classes/Socket.js"></script>
 
 <script type="text/javascript" src="Classes/Agents/AgentDiceRoll.js"></script>
 <script type="text/javascript" src="Classes/Agents/AgentEcho.js"></script>
+<script type="text/javascript" src="Classes/Agents/AgentTabletop.js"></script>
 <script type="text/javascript" src="Classes/Agents/AgentRockPaperScissors.js"></script>
 <script type="text/javascript" src="Classes/Agents/AgentRockPaperScissors_Game.js"></script>
+
+<script type="text/javascript" src="Classes/Agents/Tabletop/Movable.js"></script>
+<script type="text/javascript" src="Classes/Agents/Tabletop/Space.js"></script>
+<script type="text/javascript" src="Classes/Agents/Tabletop/Tabletop.js"></script>
 
 <!-- imports ends -->
 
@@ -43,10 +50,19 @@
 			<option>Dice Roller</option>
 			<option>Echo</option>
 			<option>Rock, Paper, Scissors</option>
+			<option>Tabletop</option>
 		</select>
 	</div>
 
-	<button onclick="buttonConnect_Clicked();">Connect</button>
+	<div>
+		<button onclick="buttonConnect_Clicked();">Connect</button>
+	</div>
+
+	<div>
+		<label>Messages:</label>
+		<br />
+		<textarea id="textareaOutput" cols="80" rows="32" disabled="true"></textarea>
+	</div>
 
 </div>
 
@@ -65,17 +81,28 @@ function buttonConnect_Clicked()
 	var selectAgentType = d.getElementById("selectAgentType");
 	var agentType = selectAgentType.value;
 
+	var outputStream = new InputOutputStreamUI();
 	if (agentType == "Dice Roller")
 	{
-		var agent = new AgentDiceRoll(agentName, serviceUrl);
+		var agent = new AgentDiceRoll(agentName, serviceUrl, outputStream);
 	}
 	else if (agentType == "Echo")
 	{
-		var agent = new AgentEcho(agentName, serviceUrl);
+		var agent = new AgentEcho(agentName, serviceUrl, outputStream);
 	}
 	else if (agentType == "Rock, Paper, Scissors")
 	{
-		var agent = new AgentRockPaperScissors(agentName, serviceUrl);
+		var agent = new AgentRockPaperScissors
+		(
+			agentName, serviceUrl, outputStream
+		);
+	}
+	else if (agentType == "Tabletop")
+	{
+		var agent = new AgentTabletop
+		(
+			agentName, serviceUrl, outputStream
+		);
 	}
 	else
 	{

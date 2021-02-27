@@ -1,15 +1,16 @@
 
 class AgentRockPaperScissors
 {
-	constructor(name, serviceUrlToConnectTo)
+	constructor(name, serviceUrlToConnectTo, outputStream)
 	{
 		this.name = name;
 
-		var ioStream = new InputOutputStreamNull();
+		var inputStream = new InputOutputStreamNull();
+		this.outputStream = outputStream || new InputOutputStreamUI();
 
 		this.client = new Client
 		(
-			ioStream, ioStream, this.messageReceive.bind(this)
+			inputStream, this.outputStream, this.messageReceive.bind(this)
 		);
 
 		var agent = this;
@@ -34,17 +35,20 @@ class AgentRockPaperScissors
 	{
 		var userSenderName = messageReceived.userSenderName;
 		var messageReceivedBody = messageReceived.body;
+
 		var messageParts = messageReceivedBody.split(" ");
 		var messagePart0 = messageParts[0];
 
 		if (messagePart0 == "rps")
 		{
+			this.outputStream.writeLine(messageReceived.toString());
+
 			var userTargetedName = messageParts[1];
 
 			if (userTargetedName == userSenderName)
 			{
 				var messageToSendBody = "You can't challenge yourself to Rock, Paper, Scissors!";
-				this.client.messageBodySend(messageToSendBody);
+				this.messageBodySend(messageToSendBody);
 			}
 			else if (this.gameInProgress != null)
 			{
@@ -52,11 +56,11 @@ class AgentRockPaperScissors
 					"Game already in progress: "
 					+ this.gameInProgress.toString()
 					+ ".  Send '/to @" + this.name + " quit' to forfeit.";
-				this.client.messageBodySend(messageToSendBody);
+				this.messageBodySend(messageToSendBody);
 			}
-			else if (messageParts < 2)
+			else if (messageParts < 2 || userTargetedName == "")
 			{
-				this.client.messageBodySend("Send 'rps [username]' to start a game.");
+				this.messageBodySend("Send 'rps [username]' to start a game.");
 			}
 			else
 			{
@@ -70,7 +74,7 @@ class AgentRockPaperScissors
 					+ "'/to @" + this.name + " rock', "
 					+ "'/to @" + this.name + " paper', or "
 					+ "'/to @" + this.name + " scissors' to play.";
-				this.client.messageBodySend(messageToSendBody);
+				this.messageBodySend(messageToSendBody);
 			}
 		}
 		else if
@@ -81,7 +85,7 @@ class AgentRockPaperScissors
 		{
 			if (this.gameInProgress == null)
 			{
-				this.client.messageBodySend("No game in progress!");
+				this.messageBodySend("No game in progress!");
 			}
 			else
 			{
@@ -92,7 +96,7 @@ class AgentRockPaperScissors
 					(
 						userSenderName, choiceChosen
 					);
-					this.client.messageBodySend(userSenderName + " has chosen.");
+					this.messageBodySend(userSenderName + " has chosen.");
 				}
 				else
 				{
@@ -105,10 +109,16 @@ class AgentRockPaperScissors
 				if (this.gameInProgress.isDone())
 				{
 					var gameResult = this.gameInProgress.result();
-					this.client.messageBodySend(gameResult);
+					this.messageBodySend(gameResult);
 					this.gameInProgress = null;
 				}
 			}
 		}
+	}
+
+	messageBodySend(messageBody)
+	{
+		this.outputStream.writeLine("Sending: " + messageBody);
+		this.client.messageBodySend(messageBody);
 	}
 }

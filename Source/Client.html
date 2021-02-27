@@ -27,7 +27,7 @@
 
 	<label>Messages:</label>
 	<br />
-	<textarea id="textareaOutput" cols="80" rows="16" disabled="true"></textarea>
+	<textarea id="textareaOutput" cols="80" rows="32" disabled="true"></textarea>
 	<br />
 
 	<label>Message to Post or Command to Run:</label>
@@ -58,7 +58,7 @@ function body_KeyPressed(event)
 function buttonSend_Clicked()
 {
 	var client = Client.Instance();
-	client.processMessageBodyOrCommandText();
+	client.processMessageBodyOrCommandTextFromInput();
 }
 
 </script>
