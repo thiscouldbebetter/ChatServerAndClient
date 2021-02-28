@@ -17,10 +17,8 @@ class Tabletop
 		for (var m = 0; m < movables.length; m++)
 		{
 			var movable = movables[m];
-			this.moveMovableWithNameToSpaceWithName
-			(
-				movable.name, movable.spaceName
-			);
+			var space = this.spaces.filter(x => x.name == movable.spaceName)[0];
+			space.movableAdd(movable);
 		}
 
 		this.usersJoinedNames = [ this.userStartingName ];
@@ -83,43 +81,43 @@ class Tabletop
 		[
 			// black
 
-			new Movable("br1", "a8"), // rook
-			new Movable("bn1", "b8"), // knight
-			new Movable("bb1", "c8"), // bishop
+			new Movable("br", "a8"), // rook
+			new Movable("bn", "b8"), // knight
+			new Movable("bb", "c8"), // bishop
 			new Movable("bq", "d8"), // queen
 			new Movable("bk", "e8"), // king
-			new Movable("bb2", "f8"),
-			new Movable("bn2", "g8"),
-			new Movable("br2", "h8"),
+			new Movable("bb", "f8"),
+			new Movable("bn", "g8"),
+			new Movable("br", "h8"),
 
-			new Movable("bp1", "a7"), // pawn
-			new Movable("bp2", "b7"),
-			new Movable("bp3", "c7"),
-			new Movable("bp4", "d7"),
-			new Movable("bp5", "e7"),
-			new Movable("bp6", "f7"),
-			new Movable("bp7", "g7"),
-			new Movable("bp8", "h7"),
+			new Movable("bp", "a7"), // pawn
+			new Movable("bp", "b7"),
+			new Movable("bp", "c7"),
+			new Movable("bp", "d7"),
+			new Movable("bp", "e7"),
+			new Movable("bp", "f7"),
+			new Movable("bp", "g7"),
+			new Movable("bp", "h7"),
 
 			// white
 
-			new Movable("wp1", "a2"),
-			new Movable("wp2", "b2"),
-			new Movable("wp3", "c2"),
-			new Movable("wp4", "d2"),
-			new Movable("wp5", "e2"),
-			new Movable("wp6", "f2"),
-			new Movable("wp7", "g2"),
-			new Movable("wp8", "h2"),
+			new Movable("wp", "a2"),
+			new Movable("wp", "b2"),
+			new Movable("wp", "c2"),
+			new Movable("wp", "d2"),
+			new Movable("wp", "e2"),
+			new Movable("wp", "f2"),
+			new Movable("wp", "g2"),
+			new Movable("wp", "h2"),
 
-			new Movable("wr1", "a1"),
-			new Movable("wn1", "b1"),
-			new Movable("wb1", "c1"),
+			new Movable("wr", "a1"),
+			new Movable("wn", "b1"),
+			new Movable("wb", "c1"),
 			new Movable("wq", "d1"),
 			new Movable("wk", "e1"),
-			new Movable("wb2", "f1"),
-			new Movable("wn2", "g1"),
-			new Movable("wr2", "h1"),
+			new Movable("wb", "f1"),
+			new Movable("wn", "g1"),
+			new Movable("wr", "h1"),
 		];
 
 		var returnValue = new Tabletop
@@ -150,9 +148,16 @@ class Tabletop
 		return true; // todo
 	}
 
-	movableByName(movableToFindName)
+	movableById(movableToFindId)
 	{
-		return this.movables.filter(x => x.name == movableToFindName)[0];
+		return this.movables.filter(x => x.id == movableToFindId)[0];
+	}
+
+	movableByNameAndSpaceName(movableToFindName, spaceToFindInName)
+	{
+		return this.movables.filter(
+			x => x.name == movableToFindName && x.spaceName == spaceToFindInName
+		)[0];
 	}
 
 	movableWithNameAddToSpaceWithName(movableName, spaceName)
@@ -174,17 +179,20 @@ class Tabletop
 		return wasSuccessful;
 	}
 
-	moveMovableWithNameToSpaceWithName(movableName, spaceName)
+	moveMovableWithNameFromSpaceWithNameToSpaceWithName(movableName, spaceFromName, spaceToName)
 	{
 		var wasSuccessful = false;
 
-		var movableToMove = this.movables.filter(x => x.name == movableName)[0];
-		var spaceToMoveTo = this.spaces.filter(x => x.name == spaceName)[0];
+		var spaceToMoveFrom = this.spaces.filter(x => x.name == spaceFromName)[0];
+		var movablesInSpaceToMoveFrom = spaceToMoveFrom.movablesPresent(this);
+		var movableToMove =
+			movablesInSpaceToMoveFrom.filter(x => x.name == movableName)[0];
+		var spaceToMoveTo = this.spaces.filter(x => x.name == spaceToName)[0];
 
 		if (movableToMove != null && spaceToMoveTo != null)
 		{
 			var isMoveAllowed =
-				this.isMoveAllowedForMovableNameAndSpaceName(movableName, spaceName);
+				this.isMoveAllowedForMovableNameAndSpaceName(movableName, spaceToName);
 			if (isMoveAllowed)
 			{
 				movableToMove.moveToSpace(this, spaceToMoveTo);
@@ -195,11 +203,12 @@ class Tabletop
 		return wasSuccessful;
 	}
 
-	removeMovableWithName(movableName)
+	removeMovableWithNameFromSpaceWithName(movableToRemoveName, spaceToRemoveFromName)
 	{
 		var wasSuccessful = false;
 
-		var movableToRemove = this.movables.filter(x => x.name == movableName)[0];
+		var movableToRemove =
+			this.movableByNameAndSpaceName(movableToRemoveName, spaceToRemoveFromName);
 		if (movableToRemove != null)
 		{
 			var indexToRemoveAt = this.movables.indexOf(movableToRemove);

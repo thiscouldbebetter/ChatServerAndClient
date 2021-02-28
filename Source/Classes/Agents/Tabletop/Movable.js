@@ -3,8 +3,19 @@ class Movable
 {
 	constructor(name, spaceName)
 	{
+		this.id = Movable.idNext();
 		this.name = name;
 		this.spaceName = spaceName;
+	}
+
+	static idNext()
+	{
+		if (Movable._idNext == null)
+		{
+			Movable._idNext = 0;
+		}
+		Movable._idNext++;
+		return Movable._idNext;
 	}
 
 	moveToSpace(tabletop, spaceToMoveTo)

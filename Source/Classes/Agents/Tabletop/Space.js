@@ -7,22 +7,22 @@ class Space
 		this.pos = pos;
 		this.size = size;
 
-		this.movablesPresentNames = [];
+		this.movablesPresentIds = [];
 	}
 
 	movableAdd(movableToAdd)
 	{
-		this.movablesPresentNames.push(movableToAdd.name);
+		this.movablesPresentIds.push(movableToAdd.id);
 		movableToAdd.spaceName = this.name;
 	}
 
 	movableRemove(movableToRemove)
 	{
 		var indexToRemoveAt =
-			this.movablesPresentNames.indexOf(movableToRemove.name);
+			this.movablesPresentIds.indexOf(movableToRemove.id);
 		if (indexToRemoveAt != -1)
 		{
-			this.movablesPresentNames.splice
+			this.movablesPresentIds.splice
 			(
 				indexToRemoveAt, 1
 			);
@@ -32,10 +32,10 @@ class Space
 
 	movablesPresent(tabletop)
 	{
-		var returnValues = this.movablesPresentNames.map
+		var returnValues = this.movablesPresentIds.map
 		(
-			x => tabletop.movableByName(x)
-		);
+			x => tabletop.movableById(x)
+		)
 		return returnValues;
 	}
 }
