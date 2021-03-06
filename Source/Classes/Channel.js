@@ -13,7 +13,10 @@ class Channel
 		for (var i = 0; i < userNames.length; i++)
 		{
 			var userName = userNames[i];
-			var connection = serverConnections.filter(x => x.user.name == userName)[0];
+			var connection = serverConnections.filter
+			(
+				x => x != null && x.user.name == userName
+			)[0];
 			returnValues.push(connection);
 		}
 		return returnValues;

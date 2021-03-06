@@ -40,13 +40,13 @@ class Connection
 			socketToClient.on
 			(
 				"newMessagePosted",
-				this.handleEvent_NewMessagePosted.bind(this, server)
+				this.messagePostedToServer.bind(this, server)
 			);
 
 			socketToClient.on
 			(
 				"disconnect",
-				this.handleEvent_ClientDisconnected.bind(this, server)
+				this.clientDisconnectedFromServer.bind(this, server)
 			);
 
 			var notificationMessageBody = this.user.name + " joined the server.";
@@ -60,7 +60,7 @@ class Connection
 		}
 	}
 
-	handleEvent_ClientDisconnected(server)
+	clientDisconnectedFromServer(server)
 	{
 		var notificationMessageBody = this.user.name + " left the server.";
 		var notificationMessage = new Message(
@@ -70,7 +70,7 @@ class Connection
 		server.connectionDisconnect(this);
 	}
 
-	handleEvent_NewMessagePosted(server, messageBodyThenUsersAddressedToNames)
+	messagePostedToServer(server, messageBodyThenUsersAddressedToNames)
 	{
 		var messageBody = messageBodyThenUsersAddressedToNames[0];
 		var usersAddressedToNames = messageBodyThenUsersAddressedToNames[1];
